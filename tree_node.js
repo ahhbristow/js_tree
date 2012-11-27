@@ -102,7 +102,13 @@ function Node(x,y,parent_node,tree,display_status) {
           stroke: '#ccc',
 	  strokeWidth: 4,
           visible: false,
-	  draggable: true
+	  draggable: true,
+	  shadow: {
+	    color: 'black',
+	    blur: 10,
+	    offset: [5, 5],
+	    opacity: 0.8
+	  }
 	});
 
 	// Add this node's kinetic JS object to the
@@ -225,7 +231,6 @@ Node.prototype.setDisplayStatus = function(status) {
 
 		if (this.line_obj) {
 			this.line_obj.show();
-			this.line_obj.setFill("#000044");
 			this.line_obj.setStroke("#333");
 		}
 
@@ -237,11 +242,12 @@ Node.prototype.setDisplayStatus = function(status) {
 		// This node may be currently hidden,
 		// so show it.	
 		this.kinetic_obj.show();
-		this.kinetic_obj.setFill("blue");
+		this.kinetic_obj.setFill("#ccccFF");
+		this.kinetic_obj.setStroke("#ccc");
 		
 		if(this.line_obj) {
 			this.line_obj.show();
-			this.line_obj.setFill("blue");
+			this.line_obj.setStroke("#ccc");
 		}
 
 
