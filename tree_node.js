@@ -11,8 +11,8 @@ Tree.prototype.init = function() {
 	// Create a kineticjs stage
 	var stage = new Kinetic.Stage({
 	   container: 'container',
-	   width: document.width,
-	   height: document.height
+	   width: 1300,
+	   height: 800
 	});
 
 	this.layer      = new Kinetic.Layer();
@@ -91,24 +91,22 @@ function Node(x,y,parent_node,tree,display_status) {
 		this.tree.addLineObject(this.line_obj);
 	}
 
-
-
 	// Initialise all the event handlers
 	this.kinetic_obj = new Kinetic.Circle({
-          x: this.x,
-          y: this.y,
-          radius: 30,
-          fill: 'red',
-          stroke: '#ccc',
-	  strokeWidth: 4,
-          visible: false,
-	  draggable: true,
-	  shadow: {
-	    color: 'black',
-	    blur: 10,
-	    offset: [5, 5],
-	    opacity: 0.8
-	  }
+	   x: this.x,
+	   y: this.y,
+	   radius: 30,
+	   fill: 'red',
+	   stroke: '#ccc',
+	   strokeWidth: 0,
+	   visible: false,
+	   draggable: true,
+	   shadow: {
+	      color: 'black',
+	      blur: 10,
+	      offset: [5, 5],
+	      opacity: 0.8
+		}
 	});
 
 	// Add this node's kinetic JS object to the
@@ -139,7 +137,38 @@ function Node(x,y,parent_node,tree,display_status) {
 	this.setDisplayStatus(display_status);
 
 
+
+	// Add DOM info box
+	this.addInfoBox();
 }
+
+
+/***********************************************
+ * Member functions
+ */
+
+
+
+
+/*
+ * Adds a box to the node that is injected
+ * into the DOM.
+ */
+Node.prototype.addInfoBox = function() {
+
+	var info_box = document.createElement("div");
+	
+	// Styling
+	info_box.height = 100;
+	info_box.width  = 80;
+	info_box.style.position = "absolute";
+	info_box.style.top = this.y;
+	info_box.style.left = this.x;
+}
+
+
+
+
 
 
 /*
@@ -187,7 +216,6 @@ Node.prototype.moveSubtree = function(dx, dy) {
 	}
 }
 
-
 /*
  * Set the position of this node (not via kinetic dragging)
  * Update the node position, kinetic obj position and the line
@@ -204,10 +232,13 @@ Node.prototype.setPosition = function(x, y) {
 	this.line_obj.setPoints(new_points);
 }
 
-
+/*
+ * Add a child node
+ */
 Node.prototype.addChild = function(child) {
 	this.children.push(child);
 }
+
 
 /*
  * A Node can have one of three display statuses:
@@ -327,7 +358,7 @@ Node.prototype.hover = function() {
 Node.prototype.unHover = function() {
 	
 	// Modify this node
-	this.kinetic_obj.setFill('444');
+	this.kinetic_obj.setFill('#444');
 
 	// Do something with the children
 	if (!this.children_fixed) {
