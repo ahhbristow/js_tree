@@ -14,6 +14,7 @@ Tree.prototype.init = function() {
 	   width: 1300,
 	   height: 800
 	});
+	console.log("Creating tree");
 
 	this.layer      = new Kinetic.Layer();
 	this.line_layer = new Kinetic.Layer();
@@ -55,6 +56,7 @@ function Node(x,y,parent_node,tree,display_status) {
 	var tree;
 	var parent_node;
 	var children;
+	var info_box;
 	
 	var kinetic_obj, line_obj;
 
@@ -63,6 +65,7 @@ function Node(x,y,parent_node,tree,display_status) {
 	var children_showing;
 	var children_fixed;	
 	var display_status;
+	var info_box_displayed;
 
 	/**************************
 	 * Initialise this instance
@@ -71,6 +74,7 @@ function Node(x,y,parent_node,tree,display_status) {
 	this.y = y;
 	this.parent_node = parent_node;
 	this.display_status = display_status;
+	this.info_box_displayed = 0;
 	this.children = new Array();
 
 	// Each node needs to store a reference
@@ -122,6 +126,7 @@ function Node(x,y,parent_node,tree,display_status) {
 		node.tree.redraw();
 	});
 	this.kinetic_obj.on("mouseenter",function() {
+		console.log("hovering");
 		node.hover();
 		node.tree.redraw();
 	});
@@ -162,12 +167,93 @@ Node.prototype.addInfoBox = function() {
 	info_box.height = 100;
 	info_box.width  = 80;
 	info_box.style.position = "absolute";
-	info_box.style.top = this.y;
-	info_box.style.left = this.x;
+	info_box.style.top = this.getY() + "px";
+	info_box.style.left = this.getX() + "px";
+	info_box.style.backgroundColor = "yellow";
+	info_box.style.display = "none";
+	info_box.innerHTML = "This is an infoBox";
+	console.log("Adding infoBox at: " + this.getX() + ", " + this.getY());
+
+	document.body.appendChild(info_box);
+
+	// Store a pointer to the DOM object in the node
+	this.info_box = info_box;
 }
 
+/*
+ * Sets the position of the info box to be the
+ * same as the node + fixed offset
+ */
+Node.prototype.moveInfoBox = function() {
+	
+	// Move the info box
+	var info_box = this.info_box;
+	info_box.style.left = (this.x + 50) + "px";
+	info_box.style.top  = (this.y - 50) + "px";
+
+}
+
+/*
+ * Display the info box and calculate a new hit
+ * region to include the info box
+ */
+Node.prototype.showInfoBox = function() {
 
 
+	// Show info box
+	this.info_box.style.display = "block";
+	this.info_box_displayed = 1;
+
+	// Set new hit region
+	//this._drawHoverRegion();
+}
+Node.prototype.hideInfoBox = function() {
+	
+	this.info_box.style.display = "none";
+	this.info_box_displayed = 1;
+
+}
+
+/*
+ * Private function to calculate the hit region
+ *
+ */
+Node.prototype._drawHoverRegion = function() {
+	
+	var info_box = this.info_box;
+
+		// This.x - radius
+	var low_x  = this.x - 30;
+	var high_x = info_box.offsetLeft + info_box.offsetWidth;
+
+	var high_y = info_box.offsetTop + info_box.offsetHeight;
+	var low_y  = info_box.offsetTop;
+
+	this.kinetic_obj.setDrawFunc(function(canvas) {
+		var context = canvas.getContext();
+		context.beginPath();
+		//context.arc(this.getX(), this.getY(), 50, 0, Math.PI * 2, true);
+		context.rect(low_x,low_y,(high_x - low_x),(high_y - low_y));
+		context.closePath();
+		this.fillStroke(context);
+	});
+
+	console.log("LOW X: " + low_x + ", LOW_Y: " + low_y);
+
+	var hit_region = new Kinetic.Rect({
+        x: low_x,
+        y: low_y,
+        width: (high_x - low_x),
+        height: (high_y - low_y),
+        fill: 'green',
+        stroke: 'black',
+        strokeWidth: 4
+	});
+
+	// Add this node's kinetic JS object to the
+	// containing tree
+	//this.tree.addKineticObject(hit_region);
+}
 
 
 
@@ -192,6 +278,9 @@ Node.prototype.move = function() {
 		var new_points = [this.parent_node.getX(), this.parent_node.getY(), this.x, this.y];
 		this.line_obj.setPoints(new_points);
 	}
+	
+	// Move the info box
+	this.moveInfoBox();
 
 	// Move the subtree starting from this node
 	// by the same amount
@@ -211,7 +300,13 @@ Node.prototype.moveSubtree = function(dx, dy) {
 	var child;
 	for(var child_idx = 0; child_idx < this.children.length; child_idx++) {
 		child = this.children[child_idx];
+
+		// Move the kinetic JS obj and its infoBox
 		child.setPosition(child.getX() + dx, child.getY() + dy);
+
+		// Move the info box
+		child.moveInfoBox();
+
 		child.moveSubtree(dx,dy);
 	}
 }
@@ -228,8 +323,10 @@ Node.prototype.setPosition = function(x, y) {
 
 	this.kinetic_obj.setPosition(x,y);
 
+	// Move the line to the parent node
 	var new_points = [this.parent_node.getX(), this.parent_node.getY(), this.x, this.y];
 	this.line_obj.setPoints(new_points);
+
 }
 
 /*
@@ -349,6 +446,9 @@ Node.prototype.hover = function() {
 	this.kinetic_obj.moveToTop();
 	this.kinetic_obj.setFill('#cc0000');
 
+	// Show the info box
+	this.showInfoBox();
+
 	// Do something with the children
 	if(!this.children_fixed) {
 		this.showChildren();
@@ -359,6 +459,8 @@ Node.prototype.unHover = function() {
 	
 	// Modify this node
 	this.kinetic_obj.setFill('#444');
+
+	this.hideInfoBox();
 
 	// Do something with the children
 	if (!this.children_fixed) {
